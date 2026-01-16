@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>100 Idioms</title>
+  <style>
+    :root{
+      --glass: rgba(255,255,255,.28);
+      --border: rgba(255,255,255,.4);
+      --text:#0f172a;
+      --seen:#22c55e;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+    body{
+      min-height:100vh;
+      background:linear-gradient(120deg,#ff9a9e,#fad0c4,#a18cd1,#8fd3f4);
+      background-size:400% 400%;
+      animation:bg 18s ease infinite;
+      color:var(--text);
+      padding:40px 20px 80px;
+    }
+    @keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    header{max-width:1100px;margin:0 auto 30px;display:flex;justify-content:space-between;align-items:center}
+    h1{font-size:3rem;font-weight:800;text-shadow:0 10px 30px rgba(0,0,0,.2)}
+    .reset{border:none;padding:10px 18px;border-radius:999px;cursor:pointer;background:rgba(255,255,255,.35);backdrop-filter:blur(10px);border:1px solid var(--border);font-weight:600}
+    .progress{max-width:1100px;margin:0 auto 25px;font-weight:600}
+    .grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+    .idiom-btn{height:90px;border-radius:18px;border:1px solid var(--border);background:var(--glass);backdrop-filter:blur(14px);font-size:1.3rem;font-weight:700;cursor:pointer;transition:.3s;box-shadow:0 12px 30px rgba(0,0,0,.18);position:relative}
+    .idiom-btn:hover{transform:translateY(-6px) scale(1.05);box-shadow:0 22px 45px rgba(0,0,0,.3)}
+    .idiom-btn.seen::after{content:'✓';position:absolute;top:8px;right:12px;color:var(--seen);font-weight:900}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:1000}
+    .overlay.active{display:flex}
+    .modal{max-width:640px;width:90%;padding:42px;border-radius:26px;background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);box-shadow:0 30px 70px rgba(0,0,0,.35);animation:pop .3s ease}
+    @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal h2{font-size:2.2rem;margin-bottom:10px}
+    .meaning{font-size:1.1rem;line-height:1.6;margin-bottom:14px}
+    .example{font-size:1rem;opacity:.85;font-style:italic}
+    .close{margin-top:28px;padding:10px 24px;border-radius:999px;border:none;background:#0f172a;color:#fff;cursor:pointer}
+    @media(max-width:900px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>100 Idioms</h1>
+  <button class="reset" onclick="resetProgress()">Reset progress</button>
+</header>
+
+<div class="progress" id="progress"></div>
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h2 id="idiomTitle"></h2>
+    <div class="meaning" id="idiomMeaning"></div>
+    <div class="example" id="idiomExample"></div>
+    <button class="close" onclick="forceClose()">Close</button>
+  </div>
+</div>
+
+<script>
+const idioms = [
+  { title:"Break the ice", meaning:"Start a conversation", example:"He told a joke to break the ice." },
+  { title:"Hit the nail on the head", meaning:"Be exactly right", example:"You hit the nail on the head." },
+  { title:"Once in a blue moon", meaning:"Very rarely", example:"I eat fast food once in a blue moon." },
+  { title:"Piece of cake", meaning:"Very easy", example:"The test was a piece of cake." },
+  { title:"Under the weather", meaning:"Feeling sick", example:"I'm under the weather." },
+  { title:"Spill the beans", meaning:"Reveal a secret", example:"She spilled the beans." },
+  { title:"Cost an arm and a leg", meaning:"Very expensive", example:"It costs an arm and a leg." },
+  { title:"Bite the bullet", meaning:"Accept difficulty", example:"I bit the bullet." },
+  { title:"Beat around the bush", meaning:"Avoid the point", example:"Stop beating around the bush." },
+  { title:"Call it a day", meaning:"Stop working", example:"Let's call it a day." },
+
+  { title:"Burn the midnight oil", meaning:"Work late", example:"He burned the midnight oil." },
+  { title:"On cloud nine", meaning:"Very happy", example:"She's on cloud nine." },
+  { title:"The ball is in your court", meaning:"Your decision", example:"Now it's your move." },
+  { title:"Cut corners", meaning:"Do cheaply", example:"They cut corners." },
+  { title:"Pull someone's leg", meaning:"Joke", example:"I was pulling your leg." },
+  { title:"Let the cat out of the bag", meaning:"Reveal secret", example:"He let it out." },
+  { title:"Back to the drawing board", meaning:"Start again", example:"The plan failed." },
+  { title:"Kill two birds with one stone", meaning:"Two goals at once", example:"Saved time." },
+  { title:"Hit the sack", meaning:"Go to sleep", example:"I'll hit the sack." },
+  { title:"In hot water", meaning:"In trouble", example:"He's in hot water." },
+
+  { title:"On the same page", meaning:"Agree", example:"We agree." },
+  { title:"Jump the gun", meaning:"Act too early", example:"Don't rush." },
+  { title:"Bend over backwards", meaning:"Try very hard", example:"She helped a lot." },
+  { title:"By the skin of your teeth", meaning:"Barely", example:"Just passed." },
+  { title:"Cry over spilled milk", meaning:"Regret past", example:"Too late now." },
+  { title:"Face the music", meaning:"Accept consequences", example:"He accepted it." },
+  { title:"Fish out of water", meaning:"Uncomfortable", example:"Felt strange." },
+  { title:"Get cold feet", meaning:"Lose courage", example:"She hesitated." },
+  { title:"Go the extra mile", meaning:"Do more", example:"He worked harder." },
+  { title:"Hang in there", meaning:"Don't give up", example:"Keep going." },
+
+  { title:"In the nick of time", meaning:"Just in time", example:"Arrived barely." },
+  { title:"Keep an eye on", meaning:"Watch carefully", example:"Watch my bag." },
+  { title:"Last straw", meaning:"Final problem", example:"That was it." },
+  { title:"Miss the boat", meaning:"Lose chance", example:"Too late." },
+  { title:"Off the hook", meaning:"Free from blame", example:"You're safe." },
+  { title:"On thin ice", meaning:"In danger", example:"Be careful." },
+  { title:"Out of the blue", meaning:"Unexpected", example:"Sudden call." },
+  { title:"Pass the buck", meaning:"Avoid blame", example:"Not me." },
+  { title:"Pull yourself together", meaning:"Calm down", example:"Relax." },
+  { title:"See eye to eye", meaning:"Agree", example:"Same view." },
+
+  { title:"Shoot yourself in the foot", meaning:"Harm yourself", example:"Bad move." },
+  { title:"Sit on the fence", meaning:"Not decide", example:"Choose." },
+  { title:"Steal the show", meaning:"Get attention", example:"She shined." },
+  { title:"Take it with a grain of salt", meaning:"Don't fully believe", example:"Be careful." },
+  { title:"Throw in the towel", meaning:"Give up", example:"He quit." },
+  { title:"Turn a blind eye", meaning:"Ignore", example:"Ignored it." },
+  { title:"Up in the air", meaning:"Uncertain", example:"Not decided." },
+  { title:"Wrap your head around", meaning:"Understand", example:"Hard to get." },
+  { title:"A blessing in disguise", meaning:"Hidden good", example:"Worked out." },
+  { title:"Add fuel to the fire", meaning:"Make worse", example:"Don't argue." },
+
+  /* ✅ FINAL 20 */
+  { title:"Hit the ground running", meaning:"Start fast", example:"Great start." },
+  { title:"Burn bridges", meaning:"Destroy relations", example:"No return." },
+  { title:"Keep your chin up", meaning:"Stay positive", example:"Don't quit." },
+  { title:"Leave no stone unturned", meaning:"Search everywhere", example:"Checked all." },
+  { title:"Make ends meet", meaning:"Survive financially", example:"Hard times." },
+  { title:"Out of your league", meaning:"Too difficult", example:"Not ready." },
+  { title:"Put all your eggs in one basket", meaning:"Risk everything", example:"Dangerous." },
+  { title:"Raise the bar", meaning:"Increase standards", example:"Higher level." },
+  { title:"Rule of thumb", meaning:"General rule", example:"Usually works." },
+  { title:"Scratch the surface", meaning:"Only the beginning", example:"Just started." },
+  { title:"Take the bull by the horns", meaning:"Act bravely", example:"He acted." },
+  { title:"The best of both worlds", meaning:"Two benefits", example:"Perfect mix." },
+  { title:"Through thick and thin", meaning:"Always", example:"True friends." },
+  { title:"Turn the tables", meaning:"Reverse situation", example:"They won." },
+  { title:"Under your belt", meaning:"Achieved", example:"Experience gained." },
+  { title:"Your guess is as good as mine", meaning:"I don't know", example:"No idea." },
+  { title:"Zero in on", meaning:"Focus", example:"Main issue." },
+  { title:"Move the goalposts", meaning:"Change rules", example:"Unfair." },
+  { title:"In someone's shoes", meaning:"Another's position", example:"Understand them." },
+  { title:"Get the hang of it", meaning:"Learn", example:"Now I can." },
+
+  /* ✅ NEWLY ADDED 30 IDIOMS */
+  { title:"At the drop of a hat", meaning:"Immediately, without hesitation", example:"She'd help you at the drop of a hat." },
+  { title:"Bite off more than you can chew", meaning:"Take on too much", example:"He bit off more than he could chew with that project." },
+  { title:"Cut to the chase", meaning:"Get to the point", example:"Let's cut to the chase - what's the problem?" },
+  { title:"Don't count your chickens before they hatch", meaning:"Don't assume success too early", example:"Wait for the contract before celebrating - don't count your chickens." },
+  { title:"Elephant in the room", meaning:"Obvious problem no one mentions", example:"The budget deficit is the elephant in the room." },
+  { title:"Fit as a fiddle", meaning:"In good health", example:"After his recovery, he's fit as a fiddle." },
+  { title:"Get a taste of your own medicine", meaning:"Experience what you give others", example:"After being rude, he got a taste of his own medicine." },
+  { title:"Hit the jackpot", meaning:"Have great success", example:"With that invention, they hit the jackpot." },
+  { title:"In a nutshell", meaning:"Summarized briefly", example:"In a nutshell, we need more funding." },
+  { title:"Jump on the bandwagon", meaning:"Join popular trend", example:"Everyone's jumping on the cryptocurrency bandwagon." },
+  { title:"Keep your cards close to your chest", meaning:"Be secretive", example:"He's keeping his cards close to his chest about the deal." },
+  { title:"Let sleeping dogs lie", meaning:"Avoid disturbing situation", example:"Don't bring up old arguments - let sleeping dogs lie." },
+  { title:"Method to my madness", meaning:"There's a reason for strange behavior", example:"It might seem chaotic, but there's method to my madness." },
+  { title:"No pain, no gain", meaning:"Suffering leads to success", example:"The workout was tough, but no pain, no gain." },
+  { title:"On the ball", meaning:"Alert and competent", example:"She's really on the ball with new technology." },
+  { title:"Play it by ear", meaning:"Improvise, not plan", example:"We don't have a schedule - we'll play it by ear." },
+  { title:"Quality time", meaning:"Meaningful time together", example:"I cherish quality time with my family." },
+  { title:"Read between the lines", meaning:"Understand hidden meaning", example:"If you read between the lines, you'll see he's unhappy." },
+  { title:"Straight from the horse's mouth", meaning:"From original source", example:"I heard it straight from the horse's mouth." },
+  { title:"The early bird catches the worm", meaning:"Early starters succeed", example:"I arrived at 5 AM - the early bird catches the worm." },
+  { title:"Up against the wall", meaning:"In difficult situation", example:"With this deadline, we're really up against the wall." },
+  { title:"Variety is the spice of life", meaning:"Diversity makes life interesting", example:"Try new things - variety is the spice of life." },
+  { title:"When pigs fly", meaning:"Never", example:"He'll tidy his room when pigs fly." },
+  { title:"X marks the spot", meaning:"Exact location", example:"The treasure is here - X marks the spot." },
+  { title:"You can't judge a book by its cover", meaning:"Don't judge by appearance", example:"The restaurant looks simple, but you can't judge a book by its cover." },
+  { title:"Zip your lip", meaning:"Be quiet", example:"Zip your lip about the surprise party." },
+  { title:"A dime a dozen", meaning:"Common, not special", example:"Those souvenirs are a dime a dozen." },
+  { title:"Barking up the wrong tree", meaning:"Mistaken, wrong approach", example:"If you think I took it, you're barking up the wrong tree." },
+  { title:"Chip on your shoulder", meaning:"Holding a grudge", example:"He's had a chip on his shoulder since the promotion." },
+  { title:"Down to earth", meaning:"Practical, realistic", example:"Despite her fame, she's very down to earth." }
+];
+
+const grid = document.getElementById('grid');
+const progressEl = document.getElementById('progress');
+let seen = JSON.parse(localStorage.getItem('seenIdioms') || '[]');
+
+function render(){
+  grid.innerHTML='';
+  idioms.forEach((i,idx)=>{
+    const b=document.createElement('button');
+    b.className='idiom-btn';
+    if(seen.includes(idx)) b.classList.add('seen');
+    b.textContent=idx+1;
+    b.onclick=()=>openModal(idx,i);
+    grid.appendChild(b);
+  });
+  progressEl.textContent = `Learned ${seen.length} / ${idioms.length}`;
+}
+
+let currentIndex=null;
+
+function openModal(index,data){
+  currentIndex=index;
+  idiomTitle.textContent=data.title;
+  idiomMeaning.textContent=data.meaning;
+  idiomExample.textContent='Example: '+data.example;
+  overlay.classList.add('active');
+  if(!seen.includes(index)){
+    seen.push(index);
+    localStorage.setItem('seenIdioms',JSON.stringify(seen));
+    render();
+  }
+}
+
+function closeModal(e){ if(e.target.id==='overlay') forceClose(); }
+function forceClose(){ overlay.classList.remove('active'); currentIndex=null; }
+
+function resetProgress(){
+  if(confirm('Reset all progress?')){
+    seen=[];
+    localStorage.removeItem('seenIdioms');
+    render();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
